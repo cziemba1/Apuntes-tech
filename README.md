@@ -1,2 +1,4 @@
 # Apuntes-tech
-Apuntes/recordatorios sobre las tecnologias aprendidas
+Guias hechas por mi misma, a modo recordatorio.
+
+1. Node - Express - MongoDB - Mongoose
