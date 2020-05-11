@@ -5,6 +5,35 @@ Reviewed: No
 
 Node para trabajar asincronicamente, utiliza callbacks(err, data) -mas comun- y promises (E6 es async y await)
 
+////////////////////////////SUMARIO DE PASOS////////////////////////////////
+
+```jsx
+npm init
+npm install --save express ejs mongoose body-parser
+
+//crear todas las variables de lo que instalamos
+//llamar express
+
+//Configurar la app
+app.set("view engine", "ejs");
+app.use("express.static("public");
+app.use(bodyParser.urlencoded({extended: true});
+mongoose.connect("mongodb//localhost/nombreDb");
+
+//Configurar mongoose y el schema/model
+
+const nombreSchema = new mongoose.Schema({
+ //configuraciones
+});
+
+const nombreModel = mongoose.model("NombreModel", nombreSchema);
+
+//Empezar con las routes
+
+```
+
+////////////////////////END SUMARIO DE PASOS////////////////////
+
 -Cargar un file
 
 const fs = require("fs");
@@ -281,6 +310,14 @@ app.post("/eventos", (req, res) => {
 //el name indica lo que subis
 ```
 
+Es comun que la primer pagina al abrirse un sitio, sea index, para eso:
+
+```jsx
+app.get("/", (req, res) => {
+  res.redirect("/blogs");
+});
+```
+
 DATABASE
 
 Coleccion de datos, con una interfaz que nos permite interactuar con esos datos.
@@ -382,7 +419,186 @@ Como usar MongoDB:
     }) 
 
     //para buscar:
-    Perro.find({}, function(err, perro)=>{
+    Perro.find({}, (err, perro)=>{
     	if(err)...
     })
     ```
+
+    ***********
+
+    Cuando tengo un button/link, que hace referencia a otra route, por ejemplo, en href:
+
+    ```jsx
+    <a href="/eventos/<%= evento._id %>" class="btn btn-danger">Mas info</a>
+
+    //SHOW - me muestra mas info de un perro en particular
+    app.get("/perro/:id", (req, res) => {
+      Evento.findById(req.params.id, (err, foundPerro) => {
+        if (err) {
+          console.log(err);
+        } else {
+          res.render("show", {perro: foundPerro});
+        }
+      });
+    });
+    ```
+
+    REST: Transferencia de Estado Representacional, es un modelo de arquitectura web basado en el protocolo HTTP para mejorar las comunicaciones cliente/servidor. Una API es RESTful porque aplica la aquitectura REST.
+
+    RESTFUL Routes:
+
+    nombre    path         verb        purpose // Mongoose method                                                 
+
+    ===============================================
+
+    INDEX      /dogs        GET        lista de perros  // Dog.find()
+
+    NEW        /dogs/new  GET      muestra formulario crear nuevo perro // n/a
+
+    CREATE    /dogs         POST    crea un nuevo perro y add a db, redirige a                        
+
+                                                    algun otro lado //    Dog.create()                    
+
+    SHOW     /dogs/:id     GET      muestra info sobre un perro espec 
+
+                                                    //Dog.findById()
+
+    EDIT        /dogs/:id/edit  GET   Muestra formulario de edicion de un perro
+
+                                             //Dog.findById()
+
+    UPDATE   /dogs/:id     PUT       Actualiza a un perro espec, luego redirige
+
+                                              //Dog.findByIdAndUpdate()
+
+    DESTROY  /dogs/:id     DELETE Elimina un perro escp, luego redirige
+
+                                               //Dog.findByIdAndDelete()
+
+    *Navegacion entre carpetas(path) 
+
+    `/` means go back to the root folder, then traverse forward/downward.
+
+    `./` means begin in the folder we are currently in (current working directory) and traverse forward/downward in the tree.
+
+    `../` means go up one directory, then begin the traverse.
+
+    ```jsx
+    //Referencia al route SHOW
+    <a  href="/blogs/<% blog._id %>">
+
+    //como hacer que encuentre la ruta para ese ID
+    app.get("/blogs/:id", (req, res) => {
+      Blog.findById(req.params.id, (err, foundBlog) => {
+        if (err) {
+          res.redirect("/blogs");
+        } else {
+          res.render("show", { blog: foundBlog });
+        }
+      });
+    });
+    // y luego crear SHOW template
+    ```
+
+    *Acortar las fechas:
+
+    ```jsx
+    blog.created.toDateString()
+    ```
+
+    *Acortar texto a mostrar:
+
+    ```jsx
+    <p><%- blog.body.substring(0, 100) %>...</p>
+    ```
+
+    ```jsx
+    //Referencia al EDIT route
+    //1. Editar el route
+    app.get("/blogs/:id/edit", (req, res) => {
+      Blog.findById(req.params.id, (err, foundBlog) => {
+        if (err) {
+          res.redirect("/blogs");
+        } else {
+          res.render("edit", { blog: foundBlog });
+        }
+      });
+    });
+
+    //en el template para que ya venga cargado lo que teniamos
+    <div class="field">
+                <label for="title">Titulo</label>
+                <input id="title" type="text" name="blog[title]" value="<%= blog.title %>">
+            </div>
+
+    ```
+
+    UPDATE route: Con respecto al metodo PUT, no existe (al igual que Delete) Iba a incluirse en HTML5, pero al parecer era muy dificil y no se incluyo.
+
+    [https://softwareengineering.stackexchange.com/questions/114156/why-are-there-are-no-put-and-delete-methods-on-html-forms](https://softwareengineering.stackexchange.com/questions/114156/why-are-there-are-no-put-and-delete-methods-on-html-forms)
+
+    Entonces, para estos dos casos:
+
+    1. En el metodo del formulario de EDIT debe usarse POST
+    2. En action:
+
+        ```jsx
+        action="/blogs/<%= blog._id %>?_method=PUT"
+        ```
+
+    3. 
+
+    ```jsx
+    npm install method-override —save
+    const methodOverride = require("method-override")
+    app.user(methodOverride("_method") //_method indica que si el request tiene _method se fige si es PUT o DELTE y lo trate asi
+    ```
+
+(Se podria crear otro route para hacer el update, pero no se seguiria la arquitectura REST)
+
+  4.  
+
+```jsx
+app.put("/blogs/:id", (req, res) => {
+  Blog.findByIdAndUpdate(id, newData, callback);
+});
+
+//Ejemplo:
+app.put("/blogs/:id", (req, res) => {
+  Blog.findByIdAndUpdate(req.params.id, req.body.blog, (err, updatedBlog) => {
+    if (err) {
+      res.redirect("/blogs");
+    } else {
+      res.redirect(`/blogs/${req.params.id}`);
+    }
+  });
+});
+```
+
+SANITIZAR LAS ROUTES
+
+```jsx
+npm install --save express-sanitizer
+const expressSanitizer = require("express-sanitizer")
+
+app.use(expressSanitizer()); //siempre poner despues de body-parser
+```
+
+Esto se realiza en CREATE y UPDATE
+
+```jsx
+//Create
+app.post("/blogs", (req, res) => {
+    //sanitize
+    **req.body.blog.body = req.sanitize(req.body.blog.body);**
+  Blog.create(req.body.blog, (err, newBlog) => {
+    if (err) {
+      res.render("new");
+    } else {
+      res.redirect("/blogs");
+    }
+  });
+});
+```
+
+Con esto, si al momento de ingresar un post, la persona quiere ingresar un script, no se renderiza ni se activa
