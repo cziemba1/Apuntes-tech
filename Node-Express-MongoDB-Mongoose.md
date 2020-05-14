@@ -602,3 +602,115 @@ app.post("/blogs", (req, res) => {
 ```
 
 Con esto, si al momento de ingresar un post, la persona quiere ingresar un script, no se renderiza ni se activa
+
+//////////
+
+Associations:  permite que multiples colleciones en el db se relacionen entre si (eventos, usuarios, comentarios)
+
+-One:one: una entidad relacionada con otra entidad
+
+-One:many: 
+
+-many:many: libros y autores
+
+1. Embedding data
+
+Un usuario puede tener varios posts, pero un post un solo user.
+
+```csharp
+//POST
+const postSchema = new mongoose.Schema({
+	title: String,
+	content: String
+});
+const Post = mongoose.model("Post", postSchema);
+
+//USER
+const userSchema = new mongoose.Schema({
+	email: String,
+	name: String,
+	posts: [postSchema] //array of posts
+});
+const User = mongoose.model("User", userSchema);
+
+const newUser = new User({
+	email: "charlie@gmail.com",
+	name: "Charlie"
+});
+
+newUser.posts.push({
+	title: "nuevo post",
+	content: "kljñdlskjfñsldf"
+})
+newUser.save((err, user)=>{
+	if(err){
+	console.log(err)}
+else{
+	console.log(user)}
+})
+
+const newPost = new Post({
+	title: "nuevo post",
+	content: "kjsñdljfañldfj"
+});
+newPost.save( (err, post)=>{
+	if(err){
+	console.log(err)}
+else{
+	console.log(user)}
+});
+
+//con embeded data, los posts fueron almacenados en un array (el post completo, con su titulo y su content
+
+```
+
+2. Reference Data - Object Reference
+
+```csharp
+//con objetct reference, los posts seran almacenados tambien en un array dentro de user
+//pero se almacenaran a traves de un objeto
+
+//USER
+const userSchema = new mongoose.Schema({
+	email: String,
+	name: String,
+	posts: [{ //array of objects id
+		type: mongoose.Schema.Types.ObjectId,
+		ref: "Post"
+	}] 
+});
+
+//crea los posts y le asigna un ID al array en posts
+const User = mongoose.model("User", userSchema);
+Post.create({ //se crea el post independiente del user
+	title: "hola2",
+	content: "klajsklaj"
+}, (err, post){
+ User.findOne({email: "jose@gmail.com"}, (err, foundUser)=>{
+	if(err){
+		console.log(err)}
+	else{
+	foundUser.posts.push(post);
+	foundUser.save((err, data)=>{
+	if(err){
+	console.log(err)}
+	else{
+	console.log(data}
+			}
+		}
+	})
+});
+
+User.create({
+	email: "jose@gmail.com",
+	name: "Jose"
+})
+
+//traducir ese object en la data del post
+User.findOne({email: "jose@gmail"}).populate("posts").exec((err, user)=>{
+	if(err){
+	console.log(err(}
+	else{
+	console.log(user)}
+});
+```
