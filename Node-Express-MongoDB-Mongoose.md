@@ -136,6 +136,8 @@ Luego el server envia de la misma forma un HTTP Response: 200 Ok ⇒start line, 
 
 //////////////////////////
 
+## Express
+
 express framework.
 
 ```jsx
@@ -318,7 +320,7 @@ app.get("/", (req, res) => {
 });
 ```
 
-DATABASE
+# Database
 
 Coleccion de datos, con una interfaz que nos permite interactuar con esos datos.
 
@@ -329,6 +331,8 @@ Hay dos tipos de db:
 Se usan tablas, columnas y rows, y entre tablas se relacionan con un id generalmente. No son flexibles
 
 -no relacionales (NoSQL): no tables, y estan nested y embeded (por ejemplo: comentario puede tener dentro autor y texto. Con las relacionales las tables debian unirse para objetener info de esa manera). en JSON y son mas flexibles. ⇒ MongoDB
+
+## MongoDB
 
 MongoDB:  es una base de datos, que se compone de Colecciones, las cuales contiene distintos documentos. El formato de datos que utiliza se llama BSON, similar a JSON pero tipado, es decir que cada dato tiene un tipo asociado.
 
@@ -442,6 +446,8 @@ Como usar MongoDB:
       });
     });
     ```
+
+    ## Restful API
 
     REST: Transferencia de Estado Representacional, es un modelo de arquitectura web basado en el protocolo HTTP para mejorar las comunicaciones cliente/servidor. Una API es RESTful porque aplica la aquitectura REST.
 
@@ -603,7 +609,7 @@ app.post("/blogs", (req, res) => {
 
 Con esto, si al momento de ingresar un post, la persona quiere ingresar un script, no se renderiza ni se activa
 
-//////////
+## Asociaciones
 
 Associations:  permite que multiples colleciones en el db se relacionen entre si (eventos, usuarios, comentarios)
 
@@ -714,3 +720,15 @@ User.findOne({email: "jose@gmail"}).populate("posts").exec((err, user)=>{
 	console.log(user)}
 });
 ```
+
+## Autenticacion
+
+Vamos a utilizar PassportJs ⇒ para implementar autenticacion.
+
+                           Passport-local ⇒ para username y password
+
+                     Passport-local-mongoose ⇒ para trabajar con mongoose
+
+Sessions: Http es un protocolo "sin estado" ⇒ cuando se envian request, los mismos no contienen informacion sobre nuestro historial, o request anteriores. A traves de las sesiones, podemos mantenernos logueados y seguir asi. Proveen un estado ("state") ⇒ encoded information.
+
+Las sesiones nos dan estado en el protocolo y nos permiten estar logueados.
