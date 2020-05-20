@@ -732,3 +732,182 @@ Vamos a utilizar PassportJs ⇒ para implementar autenticacion.
 Sessions: Http es un protocolo "sin estado" ⇒ cuando se envian request, los mismos no contienen informacion sobre nuestro historial, o request anteriores. A traves de las sesiones, podemos mantenernos logueados y seguir asi. Proveen un estado ("state") ⇒ encoded information.
 
 Las sesiones nos dan estado en el protocolo y nos permiten estar logueados.
+
+Se instalan los paquetes express, mongoose, passport, body-parser, passport-local, passport-local-mongoose y express-session, ejs
+
+```csharp
+//Pasar usar las features de mongoose-passport
+//En User Model
+
+const mongoose = require("mongoose");
+const passportLocalMongoose = require("passport-local-mongoose");
+
+const UserSchema = new mongoose.Schema({
+  username: String,
+  password: String,
+});
+
+// Load User authentication features. Agrega automaticamente la codificacion y decodificacion de las sesiones
+UserSchema.plugin(passportLocalMongoose);
+
+module.exports = mongoose.model("User", UserSchema);
+```
+
+Para usar passport en nuestra aplicacion
+
+```csharp
+const express = require("express");
+const mongoose = require("mongoose");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const passportLocalMongoose = require("passport-local-mongoose");
+const bodyParser = require("body-parser");
+const User = require("./model/user");
+
+mongoose.connect("mongodb://localhost/secret_password");
+
+const app = express();
+app.set("view engine", "ejs");
+// Se crea un secret message
+app.use(
+  require("express-session")({
+    secret: "Love programming", //codificacion
+    saveUninitialized: false,
+  })
+);
+//Body parser lee y permite utilizar la data enviada en un formulario POST
+app.user(bodyParser.urlencoded({extended: True})
+//Inicializa passport
+app.use(passport.initialize());
+//Corre passport
+app.use(passport.session());
+
+//Metodos importantes: leen la sesion que se encuentra codificada(o si esta decodificada, la codifica)
+passport.serializeUser(User.serializeUser());
+//Toman la data de la session y la decodifican
+passport.deserializeUser(User.deserializeUser());
+```
+
+Agregar signup/register formulario
+
+```csharp
+//Mostar formulario de registro
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
+//Manjear la data que el user envia (user y pw)
+app.post("/register", (req, res) => {
+  req.body.username;
+  req.body.password;
+//Se crea un usuario pero aun no esta guardado en la db.
+//Y la clave no se agrega en el objeto, ya que no es buena idea guardala en la db
+//User register  tomara esa password y la convertira en una larga cadena de string
+//Y devolvera un usuario con nombre y clave encodeada
+User.register(
+    new User({ username: req.body.username }),
+    req.body.password,
+    (req, user) => {
+        if(err){
+            console.log(err)
+            return res.render("register")
+        }
+//SI no hay error, va a correr passport authenticate y se encarga de loguear al user
+//corriendo el seralized user definido
+        passport.authenticate("local")(req, res, () => {
+        res.redirect("/secret");
+      });
+    }
+  );
+});
+```
+
+```csharp
+//Formulario en register
+<h1>Sign up Form</h1>
+<form action="/register" method="POST">
+    <input type="text" placeholder="username" name="username">
+    <input type="password" name="password" id="" placeholder="password">
+    <button>Submit</button>
+</form>
+```
+
+Con esto, cuando el usuario se registra, en nuestra db se creara el usuario con su nombre, su "salt" y su "hash", y no se guarda la clave en raw
+
+Ahora, la logica del login
+
+```csharp
+//formulario
+<h1>Login</h1>
+<form action="/login" method="POST">
+    <input type="text" placeholder="username" name="username">
+    <input type="password" name="password" id="" placeholder="password">
+    <button>Login</button>
+</form>
+```
+
+```csharp
+//Login routes
+//
+passport.use(new LocalStrategy(User.authenticate()));
+//render login form
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+//post login data
+//Se usa el passport.authenticate dentro del app.post y no el callback
+//Se trata de un middleware
+app.post(
+  "/login",
+  passport.authenticate("local", {
+    successRedirect: "/secret",
+    failureRedirect: "/login",
+  }),
+  (req, res) => {}
+);
+
+app.listen(3000, () => {
+  console.log("Server is running");
+});
+```
+
+Middleware: codigo que corre antes del callback req, res  
+
+Logout
+
+```csharp
+//No se necesita routes, solo un link
+<li><a href="/logout">Logout!</a></li>
+
+//EN app.js
+//Cuando uno se desloguea, no hay transacciones con la db
+//Passport destruye toda la data de la sesion
+app.get("/logout", (req, res) => {
+  req.logout();
+	res.redirect("/");
+});
+```
+
+Para evitar que el usuario pueda llegar a una ruta que solo se puede tener acceso una vez logueado, se debe crear un middleware que chequee si se esta logueado o no
+
+```csharp
+//Para eso creamos una funcion para chequear el if
+function isLoggedIn(req, res, next) {
+//req es el request object, res la response object y next es cosa siguiente a ser llamada
+  if (req.isAuthenticated()) {
+    return next();
+//next se refiere a:
+// res.render("secret"); (ver prox paso)
+  }
+  res.redirect("/login");
+}
+```
+
+Esta funcion la debemos agregar en la ruoute que queremos proteger y que solo se acceda por los usuarios logueados
+
+```csharp
+app.get("/secret", isLoggedIn, (req, res) => {
+  res.render("secret");
+});
+```
