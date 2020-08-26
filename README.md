@@ -6,3 +6,5 @@ Las actualizo constantemente
 2. Python
 3. C#
 4. .NET MVC
+5. Cake 
+6. SLL Certificate
